@@ -26,4 +26,21 @@ public class DateTimeColumnDef extends ColumnDefWithLength {
 		String dateString = DateFormatter.formatDateTime(value, ts);
 		return appendFractionalSeconds(dateString, ts.getNanos(), columnLength);
 	}
+
+	@Override
+	public Long asJSON(Object value, MaxwellOutputConfig config) {
+		// special case for those broken mysql dates.
+		if ( value instanceof Long ) {
+			Long v = (Long) value;
+			if ( v == Long.MIN_VALUE || (v == 0L && isTimestamp) ) {
+				if ( config.zeroDatesAsNull )
+					return null;
+				else
+					return 0L;
+			}
+		}
+
+		Timestamp ts = DateFormatter.extractTimestamp(value);
+		return ts.getTime();
+	}
 }
